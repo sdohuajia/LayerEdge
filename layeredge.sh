@@ -86,6 +86,14 @@ if [ -d "LayerEdge" ]; then
         echo "正在删除旧目录..."
         rm -rf LayerEdge
         echo "旧目录已删除。"
+        # 清理旧的 screen 会话
+            if screen -list | grep -q "layer"; then
+                echo "检测到旧的 screen 会话，正在关闭..."
+                screen -S layer -X quit
+                echo "旧的 screen 会话已关闭。"
+            else
+                echo "没有找到旧的 screen 会话。"
+            fi
     else
         echo "跳过拉取仓库，使用现有目录。"
         read -n 1 -s -r -p "按任意键继续..."
@@ -94,7 +102,7 @@ if [ -d "LayerEdge" ]; then
 fi
 
     # 拉取仓库
-    if git clone https://github.com/sdohuajia/LayerEdge.git; then
+    if git clone https://github.com/chasonyu/LayerEdge.git; then
     echo "仓库拉取成功！"
     else
     echo "仓库拉取失败，请检查网络连接或仓库地址。"
@@ -103,6 +111,7 @@ fi
     return
     fi
 
+    cd LayerEdge
     # 让用户输入代理地址
     echo "请输入代理地址（格式如 http://代理账号:代理密码@127.0.0.1:8080），每次输入一个，直接按回车结束输入："
     > proxy.txt  # 清空或创建 proxy.txt 文件
@@ -146,6 +155,7 @@ fi
     done
     fi
 
+    cd ..
     # 进入目录
     echo "进入项目目录..."
     cd LayerEdge || {

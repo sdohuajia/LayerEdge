@@ -130,7 +130,7 @@ class LayerEdgeConnection {
         return this.wallet;
     }
 
-    async makeRequest(method, url, config = {}, retries = 30) {
+    async makeRequest(method, url, config = {}, retries = 120) {
         for (let i = 0; i < retries; i++) {
             try {
                 const response = await axios({
@@ -163,7 +163,7 @@ class LayerEdgeConnection {
 
         const response = await this.makeRequest(
             "post",
-            "https://referral-api.layeredge.io/api/referral/verify-referral-code",
+            "https://referralapi.layeredge.io/api/referral/verify-referral-code",
             { data: inviteData }
         );
 
@@ -183,7 +183,7 @@ class LayerEdgeConnection {
 
         const response = await this.makeRequest(
             "post",
-            `https://referral-api.layeredge.io/api/referral/register-wallet/${this.refCode}`,
+            `https://referralapi.layeredge.io/api/referral/register-wallet/${this.refCode}`,
             { data: registerData }
         );
 
@@ -208,7 +208,7 @@ class LayerEdgeConnection {
 
         const response = await this.makeRequest(
             "post",
-            `https://referral-api.layeredge.io/api/light-node/node-action/${this.wallet.address}/start`,
+            `https://referralapi.layeredge.io/api/light-node/node-action/${this.wallet.address}/start`,
             { data: dataSign }
         );
 
@@ -233,7 +233,7 @@ class LayerEdgeConnection {
 
         const response = await this.makeRequest(
             "post",
-            `https://referral-api.layeredge.io/api/light-node/node-action/${this.wallet.address}/stop`,
+            `https://referralapi.layeredge.io/api/light-node/node-action/${this.wallet.address}/stop`,
             { data: dataSign }
         );
 
@@ -249,7 +249,7 @@ class LayerEdgeConnection {
     async checkNodeStatus() {
         const response = await this.makeRequest(
             "get",
-            `https://referral-api.layeredge.io/api/light-node/node-status/${this.wallet.address}`
+            `https://referralapi.layeredge.io/api/light-node/node-status/${this.wallet.address}`
         );
 
         if (response && response.data && response.data.data.startTimestamp !== null) {
@@ -264,7 +264,7 @@ class LayerEdgeConnection {
     async checkNodePoints() {
         const response = await this.makeRequest(
             "get",
-            `https://referral-api.layeredge.io/api/referral/wallet-details/${this.wallet.address}`
+            `https://referralapi.layeredge.io/api/referral/wallet-details/${this.wallet.address}`
         );
 
         if (response && response.data) {
@@ -272,6 +272,27 @@ class LayerEdgeConnection {
             return true;
         } else {
             logger.error("Failed to check Total Points..");
+            return false;
+        }
+    }
+
+    async clainDailyRewards() {
+        const databody = {
+            walletAddress: this.wallet.address,
+        };
+        
+        const response = await this.makeRequest(
+            "post",
+            `https://dashboard.layeredge.io/api/claim-points`,
+            { data: databody },
+            5
+        );
+ 
+        if (response && response.data) {
+            logger.info("Success Clain Daily Rewards:", JSON.stringify(response.data), JSON.stringify(databody));
+            return true;
+        } else {
+            logger.info("Failed Clain Daily Rewards:", JSON.stringify(response.data), JSON.stringify(databody));
             return false;
         }
     }
@@ -339,6 +360,9 @@ async function run() {
                 logger.progress(address, '重新连接节点', 'processing');
                 await socket.connectNode();
 
+                // logger.progress(address, '领取每日奖励', 'processing');
+                // await socket.clainDailyRewards();
+
                 logger.progress(address, '检查节点点数', 'processing');
                 await socket.checkNodePoints();
 
@@ -350,7 +374,7 @@ async function run() {
         }
         
         logger.warn('循环完成', '等待1小时后进行下一次运行...');
-        await delay(60 * 60);
+        await delay(4 * 60 * 60);
     }
 }
 
